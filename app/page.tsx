@@ -1,282 +1,317 @@
 'use client';
 
 import { useState } from 'react';
-import { Noto_Serif_JP, DM_Sans } from 'next/font/google';
+import { Coffee, Leaf, GlassWater, Cookie } from 'lucide-react';
 
-const notoSerifJP = Noto_Serif_JP({
-  subsets: ['latin'],
-  weight: ['400', '600', '700'],
-  variable: '--font-noto-serif'
-});
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-dm-sans'
-});
-
+type DrinkType = 'matcha' | 'cappuccino' | 'thaitea' | 'cocoa';
 type Size = 'S' | 'M' | 'L';
-type DrinkKey = 'matcha' | 'espresso' | 'thaitea' | 'cocoa';
 
 interface Ingredient {
   name: string;
-  baseAmount: number;
+  amount: number;
   unit: string;
-  layer: string;
-  sweetnessBased?: boolean;
+  isSweetness?: boolean;
 }
 
-interface Recipe {
+interface DrinkRecipe {
   name: string;
   nameEn: string;
-  icon: string;
-  layers: string[];
-  ingredients: Record<string, Ingredient>;
-  sizes: Record<Size, number>;
+  icon: React.ReactNode;
+  ingredients: Ingredient[];
 }
 
-const recipes: Record<DrinkKey, Recipe> = {
+const drinks: Record<DrinkType, DrinkRecipe> = {
   matcha: {
     name: 'มัทฉะลาเต้',
     nameEn: 'Matcha Latte',
-    icon: '🍵',
-    layers: ['ice', 'milk', 'sugar', 'main', 'water'],
-    ingredients: {
-      main: { name: 'ผงมัทฉะ', baseAmount: 8, unit: 'g', layer: 'main' },
-      water: { name: 'น้ำร้อน', baseAmount: 30, unit: 'ml', layer: 'water' },
-      milk: { name: 'นมสด', baseAmount: 180, unit: 'ml', layer: 'milk' },
-      sugar: { name: 'น้ำเชื่อม', baseAmount: 30, unit: 'ml', layer: 'sugar', sweetnessBased: true },
-      ice: { name: 'น้ำแข็ง', baseAmount: 120, unit: 'g', layer: 'ice' }
-    },
-    sizes: { S: 0.7, M: 1, L: 1.3 }
+    icon: <Leaf className="w-6 h-6" />,
+    ingredients: [
+      { name: 'ผงมัทฉะ', amount: 8, unit: 'g' },
+      { name: 'น้ำร้อน', amount: 30, unit: 'ml' },
+      { name: 'นมสด', amount: 180, unit: 'ml' },
+      { name: 'น้ำเชื่อม', amount: 30, unit: 'ml', isSweetness: true },
+      { name: 'น้ำแข็ง', amount: 120, unit: 'g' },
+    ],
   },
-  espresso: {
+  cappuccino: {
     name: 'คาปูชิโน่',
     nameEn: 'Cappuccino',
-    icon: '☕',
-    layers: ['ice', 'milk', 'sugar', 'main'],
-    ingredients: {
-      main: { name: 'เอสเพรสโซ่', baseAmount: 30, unit: 'ml', layer: 'main' },
-      milk: { name: 'นมสด', baseAmount: 150, unit: 'ml', layer: 'milk' },
-      sugar: { name: 'น้ำเชื่อม', baseAmount: 20, unit: 'ml', layer: 'sugar', sweetnessBased: true },
-      ice: { name: 'น้ำแข็ง', baseAmount: 100, unit: 'g', layer: 'ice' }
-    },
-    sizes: { S: 0.7, M: 1, L: 1.3 }
+    icon: <Coffee className="w-6 h-6" />,
+    ingredients: [
+      { name: 'เอสเพรสโซ่', amount: 30, unit: 'ml' },
+      { name: 'นมสด', amount: 150, unit: 'ml' },
+      { name: 'น้ำเชื่อม', amount: 20, unit: 'ml', isSweetness: true },
+      { name: 'น้ำแข็ง', amount: 100, unit: 'g' },
+    ],
   },
   thaitea: {
     name: 'ชาไทย',
     nameEn: 'Thai Tea',
-    icon: '🧋',
-    layers: ['ice', 'milk', 'sugar', 'main'],
-    ingredients: {
-      main: { name: 'ชาไทยเข้มข้น', baseAmount: 80, unit: 'ml', layer: 'main' },
-      milk: { name: 'นมข้นจืด', baseAmount: 60, unit: 'ml', layer: 'milk' },
-      sugar: { name: 'น้ำเชื่อม', baseAmount: 35, unit: 'ml', layer: 'sugar', sweetnessBased: true },
-      ice: { name: 'น้ำแข็ง', baseAmount: 150, unit: 'g', layer: 'ice' }
-    },
-    sizes: { S: 0.7, M: 1, L: 1.3 }
+    icon: <GlassWater className="w-6 h-6" />,
+    ingredients: [
+      { name: 'ชาไทยเข้มข้น', amount: 80, unit: 'ml' },
+      { name: 'นมข้นจืด', amount: 60, unit: 'ml' },
+      { name: 'น้ำเชื่อม', amount: 35, unit: 'ml', isSweetness: true },
+      { name: 'น้ำแข็ง', amount: 150, unit: 'g' },
+    ],
   },
   cocoa: {
     name: 'โกโก้',
     nameEn: 'Cocoa',
-    icon: '🍫',
-    layers: ['ice', 'milk', 'sugar', 'main', 'water'],
-    ingredients: {
-      main: { name: 'ผงโกโก้', baseAmount: 25, unit: 'g', layer: 'main' },
-      water: { name: 'น้ำร้อน', baseAmount: 50, unit: 'ml', layer: 'water' },
-      milk: { name: 'นมสด', baseAmount: 180, unit: 'ml', layer: 'milk' },
-      sugar: { name: 'น้ำเชื่อม', baseAmount: 25, unit: 'ml', layer: 'sugar', sweetnessBased: true },
-      ice: { name: 'น้ำแข็ง', baseAmount: 120, unit: 'g', layer: 'ice' }
-    },
-    sizes: { S: 0.7, M: 1, L: 1.3 }
-  }
+    icon: <Cookie className="w-6 h-6" />,
+    ingredients: [
+      { name: 'ผงโกโก้', amount: 25, unit: 'g' },
+      { name: 'น้ำร้อน', amount: 50, unit: 'ml' },
+      { name: 'นมสด', amount: 180, unit: 'ml' },
+      { name: 'น้ำเชื่อม', amount: 25, unit: 'ml', isSweetness: true },
+      { name: 'น้ำแข็ง', amount: 120, unit: 'g' },
+    ],
+  },
 };
 
-function calculateAmount(recipe: Recipe, ingredientKey: string, size: Size, sweetness: number): number {
-  const ing = recipe.ingredients[ingredientKey];
-  const sizeMultiplier = recipe.sizes[size];
-  if (ing.sweetnessBased) {
-    return Math.round(ing.baseAmount * sizeMultiplier * (sweetness / 100));
-  }
-  return Math.round(ing.baseAmount * sizeMultiplier);
-}
+const sizeMultipliers: Record<Size, number> = {
+  S: 0.7,
+  M: 1.0,
+  L: 1.3,
+};
 
-function calculateTotal(recipe: Recipe, size: Size, sweetness: number): number {
-  return Object.keys(recipe.ingredients).reduce((total, key) => {
-    return total + calculateAmount(recipe, key, size, sweetness);
-  }, 0);
-}
+const sizeInfo: Record<Size, { oz: string; label: string }> = {
+  S: { oz: '12oz', label: '-30%' },
+  M: { oz: '16oz', label: 'Standard' },
+  L: { oz: '22oz', label: '+30%' },
+};
 
-function getLayerAmounts(recipe: Recipe, size: Size, sweetness: number): Record<string, number> {
-  const amounts: Record<string, number> = {};
-  Object.entries(recipe.ingredients).forEach(([key, ing]) => {
-    const layer = ing.layer;
-    const amount = calculateAmount(recipe, key, size, sweetness);
-    amounts[layer] = (amounts[layer] || 0) + amount;
-  });
-  return amounts;
-}
-
-function Glass({ recipe, drinkKey, size, sweetness }: { recipe: Recipe; drinkKey: DrinkKey; size: Size; sweetness: number }) {
-  const layerAmounts = getLayerAmounts(recipe, size, sweetness);
-  const total = calculateTotal(recipe, size, sweetness);
-  const maxHeight = 160;
-
-  return (
-    <div className="glass-container">
-      <div className="glass">
-        <div className="glass-shine" />
-        <div className="glass-rim" />
-        <div className="glass-content">
-          {recipe.layers.map((layer, idx) => {
-            const amount = layerAmounts[layer] || 0;
-            const heightPercent = (amount / total) * 100;
-            const height = (heightPercent / 100) * maxHeight;
-            const layerClass = layer === 'main' ? `layer-main-${drinkKey}` : `layer-${layer}`;
-
-            return (
-              <div
-                key={layer}
-                className={`layer ${layerClass}`}
-                style={{
-                  height: `${height}px`,
-                  animationDelay: `${idx * 0.15}s`
-                }}
-              />
-            );
-          })}
-        </div>
-      </div>
-      <div className="straw" />
-    </div>
-  );
-}
-
-function RecipeCard({ drinkKey, recipe, sweetness }: { drinkKey: DrinkKey; recipe: Recipe; sweetness: number }) {
-  const [size, setSize] = useState<Size>('M');
-  const total = calculateTotal(recipe, size, sweetness);
-
-  return (
-    <div className="recipe-card">
-      <div className="recipe-header">
-        <span className="recipe-emoji">{recipe.icon}</span>
-        <div className="recipe-info">
-          <h3 className={`recipe-name ${notoSerifJP.className}`}>{recipe.name}</h3>
-          <p className="recipe-name-en">{recipe.nameEn}</p>
-        </div>
-        <div className="size-selector">
-          {(['S', 'M', 'L'] as Size[]).map((s) => (
-            <button
-              key={s}
-              onClick={() => setSize(s)}
-              className={`size-btn ${size === s ? 'active' : ''}`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="recipe-visual">
-        <Glass recipe={recipe} drinkKey={drinkKey} size={size} sweetness={sweetness} />
-
-        <div className="ingredients-compact">
-          {Object.entries(recipe.ingredients).map(([ingKey, ing]) => {
-            const amount = calculateAmount(recipe, ingKey, size, sweetness);
-            const colorClass = ing.layer === 'main' ? `main-${drinkKey}` : ing.layer;
-
-            return (
-              <div key={ingKey} className="ing-row">
-                <div className="ing-left">
-                  <div className={`ing-color ${colorClass}`} />
-                  <span className="ing-name">{ing.name}</span>
-                </div>
-                <div>
-                  <span className="ing-amount">{amount}</span>
-                  <span className="ing-unit">{ing.unit}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="recipe-total">
-        <span className="total-label">รวมทั้งหมด</span>
-        <span className="total-value">
-          {total}<span className="ing-unit"> ml</span>
-        </span>
-      </div>
-    </div>
-  );
-}
+const sweetnessPresets = [0, 25, 50, 75, 100];
 
 export default function Home() {
-  const [sweetness, setSweetness] = useState(25);
-  const presets = [0, 25, 50, 75, 100];
+  const [selectedDrink, setSelectedDrink] = useState<DrinkType>('matcha');
+  const [selectedSize, setSelectedSize] = useState<Size>('M');
+  const [sweetness, setSweetness] = useState(50);
+
+  const calculateAmount = (ingredient: Ingredient): number => {
+    const sizeMultiplier = sizeMultipliers[selectedSize];
+    if (ingredient.isSweetness) {
+      return Math.round(ingredient.amount * sizeMultiplier * (sweetness / 100));
+    }
+    return Math.round(ingredient.amount * sizeMultiplier);
+  };
+
+  const currentDrink = drinks[selectedDrink];
 
   return (
-    <div className={`${dmSans.variable} ${notoSerifJP.variable}`}>
-      <div className="bg-decoration" />
-
-      <div className="container">
-        <header>
-          <div className="logo">
-            <div className="logo-icon">
-              <svg viewBox="0 0 24 24">
-                <path d="M18.5 3H6C4.9 3 4 3.9 4 5v12c0 1.1.9 2 2 2h2v2h8v-2h2c1.1 0 2-.9 2-2v-3h.5c1.38 0 2.5-1.12 2.5-2.5S21.88 9 20.5 9H20V5c0-1.1-.9-2-2-2h-.5z"/>
-              </svg>
-            </div>
-          </div>
-          <h1 className={notoSerifJP.className}>คาเฟ่ 101</h1>
-          <p className="tagline">เครื่องคำนวณสูตรเครื่องดื่ม</p>
+    <main className="min-h-screen bg-white">
+      <div className="max-w-md mx-auto px-5 py-8">
+        {/* Header */}
+        <header className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-slate-800 mb-1">
+            🍹 เครื่องคำนวณสูตรเครื่องดื่ม
+          </h1>
+          <p className="text-slate-500 text-sm">
+            Select drink, size, and sweetness level
+          </p>
         </header>
 
-        <section className="sweetness-control">
-          <div className="sweetness-header">
-            <div className={`sweetness-title ${notoSerifJP.className}`}>
-              <span>🍯</span> ระดับความหวาน
-            </div>
-            <div className="sweetness-value">
-              {sweetness}<span>%</span>
-            </div>
+        {/* Drink Selection */}
+        <section className="mb-6">
+          <div className="grid grid-cols-4 gap-3">
+            {(Object.entries(drinks) as [DrinkType, DrinkRecipe][]).map(
+              ([key, drink]) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedDrink(key)}
+                  className={`
+                    flex flex-col items-center justify-center p-4 rounded-2xl
+                    transition-all duration-200 ease-out
+                    ${
+                      selectedDrink === key
+                        ? 'bg-slate-100 border-2 border-slate-800 shadow-sm'
+                        : 'bg-white border border-slate-200 hover:bg-slate-50'
+                    }
+                  `}
+                >
+                  <div
+                    className={`mb-2 ${
+                      selectedDrink === key ? 'text-slate-800' : 'text-slate-400'
+                    }`}
+                  >
+                    {drink.icon}
+                  </div>
+                  <span
+                    className={`text-xs font-medium text-center leading-tight ${
+                      selectedDrink === key ? 'text-slate-800' : 'text-slate-600'
+                    }`}
+                  >
+                    {drink.name}
+                  </span>
+                </button>
+              )
+            )}
+          </div>
+        </section>
+
+        {/* Size Selection */}
+        <section className="mb-6">
+          <h2 className="text-sm font-semibold text-slate-700 mb-3">Cup Size</h2>
+          <div className="grid grid-cols-3 gap-3">
+            {(Object.entries(sizeInfo) as [Size, { oz: string; label: string }][]).map(
+              ([size, info]) => (
+                <button
+                  key={size}
+                  onClick={() => setSelectedSize(size)}
+                  className={`
+                    flex flex-col items-center justify-center py-4 px-3 rounded-2xl
+                    transition-all duration-200 ease-out
+                    ${
+                      selectedSize === size
+                        ? 'bg-slate-100 border-2 border-slate-800 shadow-sm'
+                        : 'bg-white border border-slate-200 hover:bg-slate-50'
+                    }
+                  `}
+                >
+                  <span
+                    className={`text-2xl font-bold mb-1 ${
+                      selectedSize === size ? 'text-slate-800' : 'text-slate-600'
+                    }`}
+                  >
+                    {size}
+                  </span>
+                  <span className="text-xs text-slate-500">{info.oz}</span>
+                  <span
+                    className={`text-xs mt-0.5 ${
+                      selectedSize === size ? 'text-slate-600' : 'text-slate-400'
+                    }`}
+                  >
+                    {info.label}
+                  </span>
+                </button>
+              )
+            )}
+          </div>
+        </section>
+
+        {/* Sweetness Level */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-slate-700">Sweetness Level</h2>
+            <span className="text-2xl font-bold text-slate-800">{sweetness}%</span>
           </div>
 
-          <div className="slider-container">
-            <div className="slider-track" />
+          {/* Slider */}
+          <div className="relative mb-4">
             <input
               type="range"
               min="0"
               max="100"
-              step="5"
+              step="1"
               value={sweetness}
               onChange={(e) => setSweetness(parseInt(e.target.value))}
+              className="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer
+                         [&::-webkit-slider-thumb]:appearance-none
+                         [&::-webkit-slider-thumb]:w-5
+                         [&::-webkit-slider-thumb]:h-5
+                         [&::-webkit-slider-thumb]:bg-slate-800
+                         [&::-webkit-slider-thumb]:rounded-full
+                         [&::-webkit-slider-thumb]:cursor-pointer
+                         [&::-webkit-slider-thumb]:shadow-md
+                         [&::-webkit-slider-thumb]:transition-transform
+                         [&::-webkit-slider-thumb]:hover:scale-110
+                         [&::-moz-range-thumb]:w-5
+                         [&::-moz-range-thumb]:h-5
+                         [&::-moz-range-thumb]:bg-slate-800
+                         [&::-moz-range-thumb]:border-0
+                         [&::-moz-range-thumb]:rounded-full
+                         [&::-moz-range-thumb]:cursor-pointer"
             />
           </div>
 
-          <div className="preset-buttons">
-            {presets.map((value) => (
+          {/* Preset Buttons */}
+          <div className="flex gap-2">
+            {sweetnessPresets.map((preset) => (
               <button
-                key={value}
-                onClick={() => setSweetness(value)}
-                className={`preset-btn ${sweetness === value ? 'active' : ''}`}
+                key={preset}
+                onClick={() => setSweetness(preset)}
+                className={`
+                  flex-1 py-2 rounded-xl text-sm font-medium
+                  transition-all duration-200 ease-out
+                  ${
+                    sweetness === preset
+                      ? 'bg-slate-800 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }
+                `}
               >
-                {value}%
+                {preset}%
               </button>
             ))}
           </div>
         </section>
 
-        <section className="recipes-grid">
-          {(Object.entries(recipes) as [DrinkKey, Recipe][]).map(([key, recipe]) => (
-            <RecipeCard key={key} drinkKey={key} recipe={recipe} sweetness={sweetness} />
-          ))}
+        {/* Recipe Result Card */}
+        <section className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          {/* Card Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="text-slate-700">{currentDrink.icon}</div>
+              <div>
+                <h3 className="font-semibold text-slate-800">{currentDrink.name}</h3>
+                <p className="text-xs text-slate-400">{currentDrink.nameEn}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-medium text-slate-600">
+                Size {selectedSize}
+              </span>
+              <span className="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-medium text-slate-600">
+                {sweetness}%
+              </span>
+            </div>
+          </div>
+
+          {/* Ingredients List */}
+          <div className="px-5 py-3">
+            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              Ingredients
+            </h4>
+            <ul className="space-y-0">
+              {currentDrink.ingredients.map((ingredient, index) => {
+                const amount = calculateAmount(ingredient);
+                return (
+                  <li
+                    key={ingredient.name}
+                    className={`
+                      flex items-center justify-between py-3
+                      ${index !== currentDrink.ingredients.length - 1 ? 'border-b border-slate-100' : ''}
+                    `}
+                  >
+                    <span className="text-slate-700">{ingredient.name}</span>
+                    <span className="font-semibold text-slate-800">
+                      {amount}{' '}
+                      <span className="font-normal text-slate-400">{ingredient.unit}</span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          {/* Card Footer - Total */}
+          <div className="flex items-center justify-between px-5 py-4 bg-slate-50 border-t border-slate-100">
+            <span className="text-sm font-medium text-slate-500">Total Volume</span>
+            <span className="text-lg font-bold text-slate-800">
+              {currentDrink.ingredients.reduce(
+                (sum, ing) => sum + calculateAmount(ing),
+                0
+              )}{' '}
+              <span className="font-normal text-slate-400 text-sm">ml</span>
+            </span>
+          </div>
         </section>
 
-        <footer>
-          <p>สร้างด้วย ❤️ โดย คาเฟ่ 101</p>
+        {/* Footer */}
+        <footer className="text-center mt-8 text-slate-400 text-xs">
+          Made with ❤️ by Cafe 101
         </footer>
       </div>
-    </div>
+    </main>
   );
 }
